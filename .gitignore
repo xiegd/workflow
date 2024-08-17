@@ -1,3 +1,6 @@
+/build.cmake
+/tutorial/CMakeFiles
+
 # Prerequisites
 *.d
 
