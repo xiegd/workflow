@@ -23,58 +23,53 @@
 
 class ParallelTask;
 
-class SubTask
-{
+class SubTask {
 public:
-	virtual void dispatch() = 0;
+  virtual void dispatch() = 0;
 
 private:
-	virtual SubTask *done() = 0;
+  virtual SubTask *done() = 0;
 
 protected:
-	void subtask_done();
+  void subtask_done();
 
 public:
-	void *get_pointer() const { return this->pointer; }
-	void set_pointer(void *pointer) { this->pointer = pointer; }
+  void *get_pointer() const { return this->pointer; }
+  void set_pointer(void *pointer) { this->pointer = pointer; }
 
 private:
-	ParallelTask *parent;
-	void *pointer;
+  ParallelTask *parent;
+  void *pointer;
 
 public:
-	SubTask()
-	{
-		this->parent = NULL;
-		this->pointer = NULL;
-	}
+  SubTask() {
+    this->parent = NULL;
+    this->pointer = NULL;
+  }
 
-	virtual ~SubTask() { }
-	friend class ParallelTask;
+  virtual ~SubTask() {}
+  friend class ParallelTask;
 };
 
-class ParallelTask : public SubTask
-{
+class ParallelTask : public SubTask {
 public:
-	virtual void dispatch();
+  virtual void dispatch();
 
 protected:
-	SubTask **subtasks;
-	size_t subtasks_nr;
+  SubTask **subtasks;
+  size_t subtasks_nr;
 
 private:
-	size_t nleft;
+  size_t nleft;
 
 public:
-	ParallelTask(SubTask **subtasks, size_t n)
-	{
-		this->subtasks = subtasks;
-		this->subtasks_nr = n;
-	}
+  ParallelTask(SubTask **subtasks, size_t n) {
+    this->subtasks = subtasks;
+    this->subtasks_nr = n;
+  }
 
-	virtual ~ParallelTask() { }
-	friend class SubTask;
+  virtual ~ParallelTask() {}
+  friend class SubTask;
 };
 
 #endif
-

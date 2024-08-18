@@ -18,101 +18,88 @@
 
 #include "KafkaResult.h"
 
-namespace protocol
-{
+namespace protocol {
 
-enum
-{
-	KAFKA_STATUS_GET_RESULT,
-	KAFKA_STATUS_END,
+enum {
+  KAFKA_STATUS_GET_RESULT,
+  KAFKA_STATUS_END,
 };
 
-KafkaResult::KafkaResult()
-{
-	this->resp_vec = NULL;
-	this->resp_num = 0;
+KafkaResult::KafkaResult() {
+  this->resp_vec = NULL;
+  this->resp_num = 0;
 }
 
-KafkaResult& KafkaResult::operator= (KafkaResult&& move)
-{
-	if (this != &move)
-	{
-		delete []this->resp_vec;
+KafkaResult &KafkaResult::operator=(KafkaResult &&move) {
+  if (this != &move) {
+    delete[] this->resp_vec;
 
-		this->resp_vec = move.resp_vec;
-		move.resp_vec = NULL;
+    this->resp_vec = move.resp_vec;
+    move.resp_vec = NULL;
 
-		this->resp_num = move.resp_num;
-		move.resp_num = 0;
-	}
+    this->resp_num = move.resp_num;
+    move.resp_num = 0;
+  }
 
-	return *this;
+  return *this;
 }
 
-KafkaResult::KafkaResult(KafkaResult&& move)
-{
-	this->resp_vec = move.resp_vec;
-	move.resp_vec = NULL;
+KafkaResult::KafkaResult(KafkaResult &&move) {
+  this->resp_vec = move.resp_vec;
+  move.resp_vec = NULL;
 
-	this->resp_num = move.resp_num;
-	move.resp_num = 0;
+  this->resp_num = move.resp_num;
+  move.resp_num = 0;
 }
 
-void KafkaResult::create(size_t n)
-{
-	delete []this->resp_vec;
-	this->resp_vec = new KafkaResponse[n];
-	this->resp_num = n;
+void KafkaResult::create(size_t n) {
+  delete[] this->resp_vec;
+  this->resp_vec = new KafkaResponse[n];
+  this->resp_num = n;
 }
 
-void KafkaResult::set_resp(KafkaResponse&& resp, size_t i)
-{
-	assert(i < this->resp_num);
-	this->resp_vec[i] = std::move(resp);
+void KafkaResult::set_resp(KafkaResponse &&resp, size_t i) {
+  assert(i < this->resp_num);
+  this->resp_vec[i] = std::move(resp);
 }
 
-void KafkaResult::fetch_toppars(std::vector<KafkaToppar *>& toppars)
-{
-	toppars.clear();
+void KafkaResult::fetch_toppars(std::vector<KafkaToppar *> &toppars) {
+  toppars.clear();
 
-	KafkaToppar *toppar = NULL;
-	for (size_t i = 0; i < this->resp_num; ++i)
-	{
-		this->resp_vec[i].get_toppar_list()->rewind();
+  KafkaToppar *toppar = NULL;
+  for (size_t i = 0; i < this->resp_num; ++i) {
+    this->resp_vec[i].get_toppar_list()->rewind();
 
-		while ((toppar = this->resp_vec[i].get_toppar_list()->get_next()) != NULL)
-			toppars.push_back(toppar);
-	}
+    while ((toppar = this->resp_vec[i].get_toppar_list()->get_next()) != NULL)
+      toppars.push_back(toppar);
+  }
 }
 
-void KafkaResult::fetch_records(std::vector<std::vector<KafkaRecord *>>& records)
-{
-	records.clear();
+void KafkaResult::fetch_records(
+    std::vector<std::vector<KafkaRecord *>> &records) {
+  records.clear();
 
-	KafkaToppar *toppar = NULL;
-	KafkaRecord *record = NULL;
+  KafkaToppar *toppar = NULL;
+  KafkaRecord *record = NULL;
 
-	for (size_t i = 0; i < this->resp_num; ++i)
-	{
-		if (this->resp_vec[i].get_api_type() != Kafka_Produce &&
-			this->resp_vec[i].get_api_type() != Kafka_Fetch)
-			continue;
+  for (size_t i = 0; i < this->resp_num; ++i) {
+    if (this->resp_vec[i].get_api_type() != Kafka_Produce &&
+        this->resp_vec[i].get_api_type() != Kafka_Fetch)
+      continue;
 
-		this->resp_vec[i].get_toppar_list()->rewind();
+    this->resp_vec[i].get_toppar_list()->rewind();
 
-		while ((toppar = this->resp_vec[i].get_toppar_list()->get_next()) != NULL)
-		{
-			std::vector<KafkaRecord *> tmp;
-			toppar->record_rewind();
+    while ((toppar = this->resp_vec[i].get_toppar_list()->get_next()) != NULL) {
+      std::vector<KafkaRecord *> tmp;
+      toppar->record_rewind();
 
-			while ((record = toppar->get_record_next()) != NULL)
-				tmp.push_back(record);
+      while ((record = toppar->get_record_next()) != NULL)
+        tmp.push_back(record);
 
-			if (!tmp.empty())
-				records.emplace_back(std::move(tmp));
-		}
-	}
+      if (!tmp.empty())
+        records.emplace_back(std::move(tmp));
+    }
+  }
 }
 
-}
-
+} // namespace protocol

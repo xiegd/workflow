@@ -19,67 +19,64 @@
 #include <atomic>
 #include <gtest/gtest.h>
 
-#include "workflow/WFTaskFactory.h"
 #include "workflow/WFFacilities.h"
+#include "workflow/WFTaskFactory.h"
 
-static SubTask *create_task(int& target)
-{
-	static std::atomic<int> generator;
-	return WFTaskFactory::create_timer_task(0, [&](WFTimerTask *)
-	{
-		target = generator++;
-	});
+static SubTask *create_task(int &target) {
+  static std::atomic<int> generator;
+  return WFTaskFactory::create_timer_task(
+      0, [&](WFTimerTask *) { target = generator++; });
 }
 
-TEST(graph_unittest, WFGraphTask1)
-{
-	WFFacilities::WaitGroup wait_group(1);
+TEST(graph_unittest, WFGraphTask1) {
+  WFFacilities::WaitGroup wait_group(1);
 
-	auto graph = WFTaskFactory::create_graph_task([&wait_group](WFGraphTask *){ wait_group.done(); });
+  auto graph = WFTaskFactory::create_graph_task(
+      [&wait_group](WFGraphTask *) { wait_group.done(); });
 
-	int ta, tb, tc, td;
+  int ta, tb, tc, td;
 
-	auto& a = graph->create_graph_node(create_task(ta));
-	auto& b = graph->create_graph_node(create_task(tb));
-	auto& c = graph->create_graph_node(create_task(tc));
-	auto& d = graph->create_graph_node(create_task(td));
+  auto &a = graph->create_graph_node(create_task(ta));
+  auto &b = graph->create_graph_node(create_task(tb));
+  auto &c = graph->create_graph_node(create_task(tc));
+  auto &d = graph->create_graph_node(create_task(td));
 
-	a --> b <-- c --> d --> a;
-	c --> a;
+  a-- > b<--c--> d-- > a;
+  c-- > a;
 
-	graph->start();
-	wait_group.wait();
+  graph->start();
+  wait_group.wait();
 
-	EXPECT_LT(ta, tb);
-	EXPECT_LT(tc, tb);
-	EXPECT_LT(tc, td);
-	EXPECT_LT(td, ta);
-	EXPECT_LT(tc, ta);
+  EXPECT_LT(ta, tb);
+  EXPECT_LT(tc, tb);
+  EXPECT_LT(tc, td);
+  EXPECT_LT(td, ta);
+  EXPECT_LT(tc, ta);
 }
 
-TEST(graph_unittest, WFGraphTask2)
-{
-	WFFacilities::WaitGroup wait_group(1);
+TEST(graph_unittest, WFGraphTask2) {
+  WFFacilities::WaitGroup wait_group(1);
 
-	auto graph = WFTaskFactory::create_graph_task([&wait_group](WFGraphTask *){ wait_group.done(); });
+  auto graph = WFTaskFactory::create_graph_task(
+      [&wait_group](WFGraphTask *) { wait_group.done(); });
 
-	constexpr int N = 4096 - 1;
+  constexpr int N = 4096 - 1;
 
-	auto target = new int[N];
-	auto node = new WFGraphNode *[N];
+  auto target = new int[N];
+  auto node = new WFGraphNode *[N];
 
-	for (int i = 0; i < N; i++)
-		node[i] = &graph->create_graph_node(create_task(target[i]));
+  for (int i = 0; i < N; i++)
+    node[i] = &graph->create_graph_node(create_task(target[i]));
 
-	for (int i = 1; i < N; i++)
-		node[i]->precede(*node[(i - 1) / 2]);
+  for (int i = 1; i < N; i++)
+    node[i]->precede(*node[(i - 1) / 2]);
 
-	graph->start();
-	wait_group.wait();
+  graph->start();
+  wait_group.wait();
 
-	for (int i = 1; i < N; i++)
-		EXPECT_LT(target[i], target[(i - 1) / 2]);
+  for (int i = 1; i < N; i++)
+    EXPECT_LT(target[i], target[(i - 1) / 2]);
 
-	delete[] target;
-	delete[] node;
+  delete[] target;
+  delete[] node;
 }

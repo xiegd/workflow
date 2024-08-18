@@ -23,27 +23,21 @@
 #include "WFServer.h"
 #include "WFTaskFactory.h"
 
-using redis_process_t = std::function<void (WFRedisTask *)>;
-using WFRedisServer = WFServer<protocol::RedisRequest,
-							   protocol::RedisResponse>;
+using redis_process_t = std::function<void(WFRedisTask *)>;
+using WFRedisServer = WFServer<protocol::RedisRequest, protocol::RedisResponse>;
 
-static constexpr struct WFServerParams REDIS_SERVER_PARAMS_DEFAULT =
-{
-	.transport_type			=	TT_TCP,
-	.max_connections		=	2000,
-	.peer_response_timeout	=	10 * 1000,
-	.receive_timeout		=	-1,
-	.keep_alive_timeout		=	300 * 1000,
-	.request_size_limit		=	(size_t)-1,
-	.ssl_accept_timeout		=	5000,
+static constexpr struct WFServerParams REDIS_SERVER_PARAMS_DEFAULT = {
+    .transport_type = TT_TCP,
+    .max_connections = 2000,
+    .peer_response_timeout = 10 * 1000,
+    .receive_timeout = -1,
+    .keep_alive_timeout = 300 * 1000,
+    .request_size_limit = (size_t)-1,
+    .ssl_accept_timeout = 5000,
 };
 
-template<> inline
-WFRedisServer::WFServer(redis_process_t proc) :
-	WFServerBase(&REDIS_SERVER_PARAMS_DEFAULT),
-	process(std::move(proc))
-{
-}
+template <>
+inline WFRedisServer::WFServer(redis_process_t proc)
+    : WFServerBase(&REDIS_SERVER_PARAMS_DEFAULT), process(std::move(proc)) {}
 
 #endif
-

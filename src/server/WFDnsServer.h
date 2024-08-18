@@ -23,40 +23,34 @@
 #include "WFServer.h"
 #include "WFTaskFactory.h"
 
-using dns_process_t = std::function<void (WFDnsTask *)>;
-using WFDnsServer = WFServer<protocol::DnsRequest,
-							 protocol::DnsResponse>;
+using dns_process_t = std::function<void(WFDnsTask *)>;
+using WFDnsServer = WFServer<protocol::DnsRequest, protocol::DnsResponse>;
 
-static constexpr struct WFServerParams DNS_SERVER_PARAMS_DEFAULT =
-{
-	.transport_type			=	TT_UDP,
-	.max_connections		=	2000,
-	.peer_response_timeout	=	10 * 1000,
-	.receive_timeout		=	-1,
-	.keep_alive_timeout		=	300 * 1000,
-	.request_size_limit		=	(size_t)-1,
-	.ssl_accept_timeout		=	5000,
+static constexpr struct WFServerParams DNS_SERVER_PARAMS_DEFAULT = {
+    .transport_type = TT_UDP,
+    .max_connections = 2000,
+    .peer_response_timeout = 10 * 1000,
+    .receive_timeout = -1,
+    .keep_alive_timeout = 300 * 1000,
+    .request_size_limit = (size_t)-1,
+    .ssl_accept_timeout = 5000,
 };
 
-template<> inline
-WFDnsServer::WFServer(dns_process_t proc) :
-	WFServerBase(&DNS_SERVER_PARAMS_DEFAULT),
-	process(std::move(proc))
-{
-}
+template <>
+inline WFDnsServer::WFServer(dns_process_t proc)
+    : WFServerBase(&DNS_SERVER_PARAMS_DEFAULT), process(std::move(proc)) {}
 
-template<> inline
-CommSession *WFDnsServer::new_session(long long seq, CommConnection *conn)
-{
-	WFDnsTask *task;
+template <>
+inline CommSession *WFDnsServer::new_session(long long seq,
+                                             CommConnection *conn) {
+  WFDnsTask *task;
 
-	task = WFServerTaskFactory::create_dns_task(this, this->process);
-	task->set_keep_alive(this->params.keep_alive_timeout);
-	task->set_receive_timeout(this->params.receive_timeout);
-	task->get_req()->set_size_limit(this->params.request_size_limit);
+  task = WFServerTaskFactory::create_dns_task(this, this->process);
+  task->set_keep_alive(this->params.keep_alive_timeout);
+  task->set_receive_timeout(this->params.receive_timeout);
+  task->get_req()->set_size_limit(this->params.request_size_limit);
 
-	return task;
+  return task;
 }
 
 #endif
-

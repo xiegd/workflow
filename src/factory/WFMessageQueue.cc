@@ -16,79 +16,67 @@
   Authors: Xie Han (xiehan@sogou-inc.com)
 */
 
-#include "list.h"
-#include "WFTask.h"
 #include "WFMessageQueue.h"
+#include "WFTask.h"
+#include "list.h"
 
-class __MQConditional : public WFConditional
-{
+class __MQConditional : public WFConditional {
 public:
-	struct list_head list;
-	struct WFMessageQueue::Data *data;
-
-public:
-	virtual void dispatch();
-	virtual void signal(void *msg) { }
+  struct list_head list;
+  struct WFMessageQueue::Data *data;
 
 public:
-	__MQConditional(SubTask *task, void **msgbuf,
-					struct WFMessageQueue::Data *data) :
-		WFConditional(task, msgbuf)
-	{
-		this->data = data;
-	}
+  virtual void dispatch();
+  virtual void signal(void *msg) {}
 
-	__MQConditional(SubTask *task,
-					struct WFMessageQueue::Data *data) :
-		WFConditional(task)
-	{
-		this->data = data;
-	}
+public:
+  __MQConditional(SubTask *task, void **msgbuf,
+                  struct WFMessageQueue::Data *data)
+      : WFConditional(task, msgbuf) {
+    this->data = data;
+  }
+
+  __MQConditional(SubTask *task, struct WFMessageQueue::Data *data)
+      : WFConditional(task) {
+    this->data = data;
+  }
 };
 
-void __MQConditional::dispatch()
-{
-	struct WFMessageQueue::Data *data = this->data;
+void __MQConditional::dispatch() {
+  struct WFMessageQueue::Data *data = this->data;
 
-	data->mutex.lock();
-	if (!list_empty(&data->msg_list))
-		this->WFConditional::signal(data->pop());
-	else
-		list_add_tail(&this->list, &data->wait_list);
+  data->mutex.lock();
+  if (!list_empty(&data->msg_list))
+    this->WFConditional::signal(data->pop());
+  else
+    list_add_tail(&this->list, &data->wait_list);
 
-	data->mutex.unlock();
-	this->WFConditional::dispatch();
+  data->mutex.unlock();
+  this->WFConditional::dispatch();
 }
 
-WFConditional *WFMessageQueue::get(SubTask *task, void **msgbuf)
-{
-	return new __MQConditional(task, msgbuf, &this->data);
+WFConditional *WFMessageQueue::get(SubTask *task, void **msgbuf) {
+  return new __MQConditional(task, msgbuf, &this->data);
 }
 
-WFConditional *WFMessageQueue::get(SubTask *task)
-{
-	return new __MQConditional(task, &this->data);
+WFConditional *WFMessageQueue::get(SubTask *task) {
+  return new __MQConditional(task, &this->data);
 }
 
-void WFMessageQueue::post(void *msg)
-{
-	struct WFMessageQueue::Data *data = &this->data;
-	WFConditional *cond;
+void WFMessageQueue::post(void *msg) {
+  struct WFMessageQueue::Data *data = &this->data;
+  WFConditional *cond;
 
-	data->mutex.lock();
-	if (!list_empty(&data->wait_list))
-	{
-		cond = list_entry(data->wait_list.next, __MQConditional, list);
-		list_del(data->wait_list.next);
-	}
-	else
-	{
-		cond = NULL;
-		this->push(msg);
-	}
+  data->mutex.lock();
+  if (!list_empty(&data->wait_list)) {
+    cond = list_entry(data->wait_list.next, __MQConditional, list);
+    list_del(data->wait_list.next);
+  } else {
+    cond = NULL;
+    this->push(msg);
+  }
 
-	data->mutex.unlock();
-	if (cond)
-		cond->WFConditional::signal(msg);
+  data->mutex.unlock();
+  if (cond)
+    cond->WFConditional::signal(msg);
 }
-

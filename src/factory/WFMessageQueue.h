@@ -19,70 +19,63 @@
 #ifndef _WFMESSAGEQUEUE_H_
 #define _WFMESSAGEQUEUE_H_
 
-#include <mutex>
-#include "list.h"
 #include "WFTask.h"
+#include "list.h"
+#include <mutex>
 
-class WFMessageQueue
-{
+class WFMessageQueue {
 public:
-	WFConditional *get(SubTask *task, void **msgbuf);
-	WFConditional *get(SubTask *task);
-	void post(void *msg);
-
-public:
-	struct Data
-	{
-		void *pop() { return this->queue->pop(); }
-		void push(void *msg) { this->queue->push(msg); }
-
-		struct list_head msg_list;
-		struct list_head wait_list;
-		std::mutex mutex;
-		WFMessageQueue *queue;
-	};
-
-protected:
-	struct MessageEntry
-	{
-		struct list_head list;
-		void *msg;
-	};
-
-protected:
-	virtual void *pop()
-	{
-		struct MessageEntry *entry;
-		void *msg;
-
-		entry = list_entry(this->data.msg_list.next, struct MessageEntry, list);
-		list_del(&entry->list);
-		msg = entry->msg;
-		delete entry;
-
-		return msg;
-	}
-
-	virtual void push(void *msg)
-	{
-		struct MessageEntry *entry = new struct MessageEntry;
-		entry->msg = msg;
-		list_add_tail(&entry->list, &this->data.msg_list);
-	}
-
-protected:
-	struct Data data;
+  WFConditional *get(SubTask *task, void **msgbuf);
+  WFConditional *get(SubTask *task);
+  void post(void *msg);
 
 public:
-	WFMessageQueue()
-	{
-		INIT_LIST_HEAD(&this->data.msg_list);
-		INIT_LIST_HEAD(&this->data.wait_list);
-		this->data.queue = this;
-	}
+  struct Data {
+    void *pop() { return this->queue->pop(); }
+    void push(void *msg) { this->queue->push(msg); }
 
-	virtual ~WFMessageQueue() { }
+    struct list_head msg_list;
+    struct list_head wait_list;
+    std::mutex mutex;
+    WFMessageQueue *queue;
+  };
+
+protected:
+  struct MessageEntry {
+    struct list_head list;
+    void *msg;
+  };
+
+protected:
+  virtual void *pop() {
+    struct MessageEntry *entry;
+    void *msg;
+
+    entry = list_entry(this->data.msg_list.next, struct MessageEntry, list);
+    list_del(&entry->list);
+    msg = entry->msg;
+    delete entry;
+
+    return msg;
+  }
+
+  virtual void push(void *msg) {
+    struct MessageEntry *entry = new struct MessageEntry;
+    entry->msg = msg;
+    list_add_tail(&entry->list, &this->data.msg_list);
+  }
+
+protected:
+  struct Data data;
+
+public:
+  WFMessageQueue() {
+    INIT_LIST_HEAD(&this->data.msg_list);
+    INIT_LIST_HEAD(&this->data.wait_list);
+    this->data.queue = this;
+  }
+
+  virtual ~WFMessageQueue() {}
 };
 
 #endif
-

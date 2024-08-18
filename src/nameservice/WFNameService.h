@@ -19,138 +19,117 @@
 #ifndef _WFNAMESERVICE_H_
 #define _WFNAMESERVICE_H_
 
-#include <pthread.h>
-#include <functional>
-#include <utility>
-#include "rbtree.h"
 #include "Communicator.h"
-#include "Workflow.h"
-#include "WFTask.h"
+#include "EndpointParams.h"
 #include "RouteManager.h"
 #include "URIParser.h"
-#include "EndpointParams.h"
+#include "WFTask.h"
+#include "Workflow.h"
+#include "rbtree.h"
+#include <functional>
+#include <pthread.h>
+#include <utility>
 
-class WFRouterTask : public WFGenericTask
-{
+class WFRouterTask : public WFGenericTask {
 public:
-	RouteManager::RouteResult *get_result() { return &this->result; }
+  RouteManager::RouteResult *get_result() { return &this->result; }
 
 public:
-	void set_state(int state) { this->state = state; }
-	void set_error(int error) { this->error = error; }
+  void set_state(int state) { this->state = state; }
+  void set_error(int error) { this->error = error; }
 
 protected:
-	RouteManager::RouteResult result;
-	std::function<void (WFRouterTask *)> callback;
+  RouteManager::RouteResult result;
+  std::function<void(WFRouterTask *)> callback;
 
 protected:
-	virtual SubTask *done()
-	{
-		SeriesWork *series = series_of(this);
+  virtual SubTask *done() {
+    SeriesWork *series = series_of(this);
 
-		if (this->callback)
-			this->callback(this);
+    if (this->callback)
+      this->callback(this);
 
-		delete this;
-		return series->pop();
-	}
+    delete this;
+    return series->pop();
+  }
 
 public:
-	WFRouterTask(std::function<void (WFRouterTask *)>&& cb) :
-		callback(std::move(cb))
-	{
-	}
+  WFRouterTask(std::function<void(WFRouterTask *)> &&cb)
+      : callback(std::move(cb)) {}
 };
 
-class WFNSTracing
-{
+class WFNSTracing {
 public:
-	void *data;
-	void (*deleter)(void *);
+  void *data;
+  void (*deleter)(void *);
 
 public:
-	WFNSTracing()
-	{
-		this->data = NULL;
-		this->deleter = NULL;
-	}
+  WFNSTracing() {
+    this->data = NULL;
+    this->deleter = NULL;
+  }
 };
 
-struct WFNSParams
-{
-	enum TransportType type;
-	ParsedURI& uri;
-	const char *info;
-	SSL_CTX *ssl_ctx;
-	bool fixed_addr;
-	bool fixed_conn;
-	int retry_times;
-	WFNSTracing *tracing;
+struct WFNSParams {
+  enum TransportType type;
+  ParsedURI &uri;
+  const char *info;
+  SSL_CTX *ssl_ctx;
+  bool fixed_addr;
+  bool fixed_conn;
+  int retry_times;
+  WFNSTracing *tracing;
 };
 
-using router_callback_t = std::function<void (WFRouterTask *)>;
+using router_callback_t = std::function<void(WFRouterTask *)>;
 
-class WFNSPolicy
-{
+class WFNSPolicy {
 public:
-	virtual WFRouterTask *create_router_task(const struct WFNSParams *params,
-											 router_callback_t callback) = 0;
+  virtual WFRouterTask *create_router_task(const struct WFNSParams *params,
+                                           router_callback_t callback) = 0;
 
-	virtual void success(RouteManager::RouteResult *result,
-						 WFNSTracing *tracing,
-						 CommTarget *target)
-	{
-		RouteManager::notify_available(result->cookie, target);
-	}
+  virtual void success(RouteManager::RouteResult *result, WFNSTracing *tracing,
+                       CommTarget *target) {
+    RouteManager::notify_available(result->cookie, target);
+  }
 
-	virtual void failed(RouteManager::RouteResult *result,
-						WFNSTracing *tracing,
-						CommTarget *target)
-	{
-		if (target)
-			RouteManager::notify_unavailable(result->cookie, target);
-	}
+  virtual void failed(RouteManager::RouteResult *result, WFNSTracing *tracing,
+                      CommTarget *target) {
+    if (target)
+      RouteManager::notify_unavailable(result->cookie, target);
+  }
 
 public:
-	virtual ~WFNSPolicy() { }
+  virtual ~WFNSPolicy() {}
 };
 
-class WFNameService
-{
+class WFNameService {
 public:
-	int add_policy(const char *name, WFNSPolicy *policy);
-	WFNSPolicy *get_policy(const char *name);
-	WFNSPolicy *del_policy(const char *name);
+  int add_policy(const char *name, WFNSPolicy *policy);
+  WFNSPolicy *get_policy(const char *name);
+  WFNSPolicy *del_policy(const char *name);
 
 public:
-	WFNSPolicy *get_default_policy() const
-	{
-		return this->default_policy;
-	}
+  WFNSPolicy *get_default_policy() const { return this->default_policy; }
 
-	void set_default_policy(WFNSPolicy *policy)
-	{
-		this->default_policy = policy;
-	}
+  void set_default_policy(WFNSPolicy *policy) { this->default_policy = policy; }
 
 private:
-	WFNSPolicy *default_policy;
-	struct rb_root root;
-	pthread_rwlock_t rwlock;
+  WFNSPolicy *default_policy;
+  struct rb_root root;
+  pthread_rwlock_t rwlock;
 
 private:
-	struct WFNSPolicyEntry *get_policy_entry(const char *name);
+  struct WFNSPolicyEntry *get_policy_entry(const char *name);
 
 public:
-	WFNameService(WFNSPolicy *default_policy) :
-		rwlock(PTHREAD_RWLOCK_INITIALIZER)
-	{
-		this->root.rb_node = NULL;
-		this->default_policy = default_policy;
-	}
+  WFNameService(WFNSPolicy *default_policy)
+      : rwlock(PTHREAD_RWLOCK_INITIALIZER) {
+    this->root.rb_node = NULL;
+    this->default_policy = default_policy;
+  }
 
-	virtual ~WFNameService();
+  virtual ~WFNameService();
 };
 
 #endif
-

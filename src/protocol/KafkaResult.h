@@ -19,47 +19,41 @@
 #ifndef _KAFKARESULT_H_
 #define _KAFKARESULT_H_
 
-#include <map>
-#include <vector>
-#include <string>
-#include "KafkaMessage.h"
 #include "KafkaDataTypes.h"
+#include "KafkaMessage.h"
+#include <map>
+#include <string>
+#include <vector>
 
-namespace protocol
-{
+namespace protocol {
 
-class KafkaResult
-{
+class KafkaResult {
 public:
-	// for offsetcommit
-	void fetch_toppars(std::vector<KafkaToppar *>& toppars);
+  // for offsetcommit
+  void fetch_toppars(std::vector<KafkaToppar *> &toppars);
 
-	// for produce, fetch
-	void fetch_records(std::vector<std::vector<KafkaRecord *>>& records);
-
-public:
-	void create(size_t n);
-
-	void set_resp(KafkaResponse&& resp, size_t i);
+  // for produce, fetch
+  void fetch_records(std::vector<std::vector<KafkaRecord *>> &records);
 
 public:
-	KafkaResult();
+  void create(size_t n);
 
-	virtual ~KafkaResult()
-	{
-		delete []this->resp_vec;
-	}
+  void set_resp(KafkaResponse &&resp, size_t i);
 
-	KafkaResult& operator= (KafkaResult&& move);
+public:
+  KafkaResult();
 
-	KafkaResult(KafkaResult&& move);
+  virtual ~KafkaResult() { delete[] this->resp_vec; }
+
+  KafkaResult &operator=(KafkaResult &&move);
+
+  KafkaResult(KafkaResult &&move);
 
 private:
-	KafkaResponse *resp_vec;
-	size_t resp_num;
+  KafkaResponse *resp_vec;
+  size_t resp_num;
 };
 
-}
+} // namespace protocol
 
 #endif
-

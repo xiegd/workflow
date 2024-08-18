@@ -16,95 +16,79 @@
   Author: Xie Han (xiehan@sogou-inc.com)
 */
 
-#include <vector>
-#include "Workflow.h"
 #include "WFGraphTask.h"
+#include "Workflow.h"
+#include <vector>
 
-SubTask *WFGraphNode::done()
-{
-	SeriesWork *series = series_of(this);
+SubTask *WFGraphNode::done() {
+  SeriesWork *series = series_of(this);
 
-	if (!this->user_data)
-	{
-		this->value = 1;
-		this->user_data = (void *)1;
-	}
-	else
-		delete this;
+  if (!this->user_data) {
+    this->value = 1;
+    this->user_data = (void *)1;
+  } else
+    delete this;
 
-	return series->pop();
+  return series->pop();
 }
 
-WFGraphNode::~WFGraphNode()
-{
-	if (this->user_data)
-	{
-		if (series_of(this)->is_canceled())
-		{
-			for (WFGraphNode *node : this->successors)
-				series_of(node)->SeriesWork::cancel();
-		}
+WFGraphNode::~WFGraphNode() {
+  if (this->user_data) {
+    if (series_of(this)->is_canceled()) {
+      for (WFGraphNode *node : this->successors)
+        series_of(node)->SeriesWork::cancel();
+    }
 
-		for (WFGraphNode *node : this->successors)
-			node->WFCounterTask::count();
-	}
+    for (WFGraphNode *node : this->successors)
+      node->WFCounterTask::count();
+  }
 }
 
-WFGraphNode& WFGraphTask::create_graph_node(SubTask *task)
-{
-	WFGraphNode *node = new WFGraphNode;
-	SeriesWork *series = Workflow::create_series_work(node, node, nullptr);
+WFGraphNode &WFGraphTask::create_graph_node(SubTask *task) {
+  WFGraphNode *node = new WFGraphNode;
+  SeriesWork *series = Workflow::create_series_work(node, node, nullptr);
 
-	series->push_back(task);
-	this->parallel->add_series(series);
-	return *node;
+  series->push_back(task);
+  this->parallel->add_series(series);
+  return *node;
 }
 
-void WFGraphTask::dispatch()
-{
-	SeriesWork *series = series_of(this);
+void WFGraphTask::dispatch() {
+  SeriesWork *series = series_of(this);
 
-	if (this->parallel)
-	{
-		series->push_front(this);
-		series->push_front(this->parallel);
-		this->parallel = NULL;
-	}
-	else
-		this->state = WFT_STATE_SUCCESS;
+  if (this->parallel) {
+    series->push_front(this);
+    series->push_front(this->parallel);
+    this->parallel = NULL;
+  } else
+    this->state = WFT_STATE_SUCCESS;
 
-	this->subtask_done();
+  this->subtask_done();
 }
 
-SubTask *WFGraphTask::done()
-{
-	SeriesWork *series = series_of(this);
+SubTask *WFGraphTask::done() {
+  SeriesWork *series = series_of(this);
 
-	if (this->state == WFT_STATE_SUCCESS)
-	{
-		if (this->callback)
-			this->callback(this);
+  if (this->state == WFT_STATE_SUCCESS) {
+    if (this->callback)
+      this->callback(this);
 
-		delete this;
-	}
+    delete this;
+  }
 
-	return series->pop();
+  return series->pop();
 }
 
-WFGraphTask::~WFGraphTask()
-{
-	SeriesWork *series;
-	size_t i;
+WFGraphTask::~WFGraphTask() {
+  SeriesWork *series;
+  size_t i;
 
-	if (this->parallel)
-	{
-		for (i = 0; i < this->parallel->size(); i++)
-		{
-			series = this->parallel->series_at(i);
-			series->unset_last_task();
-		}
+  if (this->parallel) {
+    for (i = 0; i < this->parallel->size(); i++) {
+      series = this->parallel->series_at(i);
+      series->unset_last_task();
+    }
 
-		this->parallel->dismiss();
-	}
+    this->parallel->dismiss();
+  }
 }
-

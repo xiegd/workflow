@@ -21,32 +21,24 @@
 
 #include "ProtocolMessage.h"
 
-namespace protocol
-{
+namespace protocol {
 
-class PackageWrapper : public ProtocolWrapper
-{
+class PackageWrapper : public ProtocolWrapper {
 private:
-	virtual ProtocolMessage *next(ProtocolMessage *msg)
-	{
-		return NULL;
-	}
+  virtual ProtocolMessage *next(ProtocolMessage *msg) { return NULL; }
 
 protected:
-	virtual int encode(struct iovec vectors[], int max);
-	virtual int append(const void *buf, size_t *size);
+  virtual int encode(struct iovec vectors[], int max);
+  virtual int append(const void *buf, size_t *size);
 
 public:
-	PackageWrapper(ProtocolMessage *msg) : ProtocolWrapper(msg)
-	{
-	}
+  PackageWrapper(ProtocolMessage *msg) : ProtocolWrapper(msg) {}
 
 public:
-	PackageWrapper(PackageWrapper&& wrapper) = default;
-	PackageWrapper& operator = (PackageWrapper&& wrapper) = default;
+  PackageWrapper(PackageWrapper &&wrapper) = default;
+  PackageWrapper &operator=(PackageWrapper &&wrapper) = default;
 };
 
-}
+} // namespace protocol
 
 #endif
-

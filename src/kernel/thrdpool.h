@@ -23,15 +23,13 @@
 
 typedef struct __thrdpool thrdpool_t;
 
-struct thrdpool_task
-{
-	void (*routine)(void *);
-	void *context;
+struct thrdpool_task {
+  void (*routine)(void *);
+  void *context;
 };
 
 #ifdef __cplusplus
-extern "C"
-{
+extern "C" {
 #endif
 
 /*
@@ -53,11 +51,10 @@ int thrdpool_increase(thrdpool_t *pool);
 int thrdpool_decrease(thrdpool_t *pool);
 void thrdpool_exit(thrdpool_t *pool);
 void thrdpool_destroy(void (*pending)(const struct thrdpool_task *),
-					  thrdpool_t *pool);
+                      thrdpool_t *pool);
 
 #ifdef __cplusplus
 }
 #endif
 
 #endif
-

@@ -21,22 +21,20 @@
 
 #include <stdlib.h>
 
-typedef struct __mysql_stream
-{
-	unsigned char head[4];
-	unsigned char head_left;
-	unsigned char sequence_id;  
-	int payload_length;
-	int payload_left;
-	void *buf;
-	size_t length;
-	size_t bufsize;
-	int (*write)(const void *, size_t *, struct __mysql_stream *);
+typedef struct __mysql_stream {
+  unsigned char head[4];
+  unsigned char head_left;
+  unsigned char sequence_id;
+  int payload_length;
+  int payload_left;
+  void *buf;
+  size_t length;
+  size_t bufsize;
+  int (*write)(const void *, size_t *, struct __mysql_stream *);
 } mysql_stream_t;
 
 #ifdef __cplusplus
-extern "C"
-{
+extern "C" {
 #endif
 
 void mysql_stream_init(mysql_stream_t *stream);
@@ -46,27 +44,22 @@ void mysql_stream_init(mysql_stream_t *stream);
 #endif
 
 static inline int mysql_stream_write(const void *buf, size_t *n,
-									 mysql_stream_t *stream)
-{
-	return stream->write(buf, n, stream);
+                                     mysql_stream_t *stream) {
+  return stream->write(buf, n, stream);
 }
 
-static inline int mysql_stream_get_seq(mysql_stream_t *stream)
-{
-	return stream->sequence_id;
+static inline int mysql_stream_get_seq(mysql_stream_t *stream) {
+  return stream->sequence_id;
 }
 
 static inline void mysql_stream_get_buf(const void **buf, size_t *length,
-										mysql_stream_t *stream)
-{
-	*buf = stream->buf;
-	*length = stream->length;
+                                        mysql_stream_t *stream) {
+  *buf = stream->buf;
+  *length = stream->length;
 }
 
-static inline void mysql_stream_deinit(mysql_stream_t *stream)
-{
-	free(stream->buf);
+static inline void mysql_stream_deinit(mysql_stream_t *stream) {
+  free(stream->buf);
 }
 
 #endif
-

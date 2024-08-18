@@ -19,51 +19,47 @@
 #ifndef _TLVMESSAGE_H_
 #define _TLVMESSAGE_H_
 
-#include <stdint.h>
-#include <utility>
-#include <string>
 #include "ProtocolMessage.h"
+#include <stdint.h>
+#include <string>
+#include <utility>
 
-namespace protocol
-{
+namespace protocol {
 
-class TLVMessage : public ProtocolMessage
-{
+class TLVMessage : public ProtocolMessage {
 public:
-	int get_type() const { return this->type; }
-	void set_type(int type) { this->type = type; }
+  int get_type() const { return this->type; }
+  void set_type(int type) { this->type = type; }
 
-	std::string *get_value() { return &this->value; }
-	void set_value(std::string value) { this->value = std::move(value); }
-
-protected:
-	virtual int encode(struct iovec vectors[], int max);
-	virtual int append(const void *buf, size_t *size);
+  std::string *get_value() { return &this->value; }
+  void set_value(std::string value) { this->value = std::move(value); }
 
 protected:
-	int type;
-	std::string value;
+  virtual int encode(struct iovec vectors[], int max);
+  virtual int append(const void *buf, size_t *size);
+
+protected:
+  int type;
+  std::string value;
 
 private:
-	uint32_t head[2];
-	size_t head_received;
+  uint32_t head[2];
+  size_t head_received;
 
 public:
-	TLVMessage()
-	{
-		this->type = 0;
-		this->head_received = 0;
-	}
+  TLVMessage() {
+    this->type = 0;
+    this->head_received = 0;
+  }
 
 public:
-	TLVMessage(TLVMessage&& msg) = default;
-	TLVMessage& operator = (TLVMessage&& msg) = default;
+  TLVMessage(TLVMessage &&msg) = default;
+  TLVMessage &operator=(TLVMessage &&msg) = default;
 };
 
 using TLVRequest = TLVMessage;
 using TLVResponse = TLVMessage;
 
-}
+} // namespace protocol
 
 #endif
-

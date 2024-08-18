@@ -19,82 +19,72 @@
 #ifndef _WFDNSRESOLVER_H_
 #define _WFDNSRESOLVER_H_
 
-#include <string>
-#include <functional>
 #include "EndpointParams.h"
 #include "WFNameService.h"
+#include <functional>
+#include <string>
 
-class WFResolverTask : public WFRouterTask
-{
+class WFResolverTask : public WFRouterTask {
 public:
-	WFResolverTask(const struct WFNSParams *ns_params,
-				   unsigned int dns_ttl_default, unsigned int dns_ttl_min,
-				   const struct EndpointParams *ep_params,
-				   router_callback_t&& cb) :
-		WFRouterTask(std::move(cb)),
-		ns_params_(*ns_params),
-		ep_params_(*ep_params)
-	{
-		if (ns_params_.fixed_conn)
-			ep_params_.max_connections = 1;
+  WFResolverTask(const struct WFNSParams *ns_params,
+                 unsigned int dns_ttl_default, unsigned int dns_ttl_min,
+                 const struct EndpointParams *ep_params, router_callback_t &&cb)
+      : WFRouterTask(std::move(cb)), ns_params_(*ns_params),
+        ep_params_(*ep_params) {
+    if (ns_params_.fixed_conn)
+      ep_params_.max_connections = 1;
 
-		dns_ttl_default_ = dns_ttl_default;
-		dns_ttl_min_ = dns_ttl_min;
-		has_next_ = false;
-		in_guard_ = false;
-		msg_ = NULL;
-	}
+    dns_ttl_default_ = dns_ttl_default;
+    dns_ttl_min_ = dns_ttl_min;
+    has_next_ = false;
+    in_guard_ = false;
+    msg_ = NULL;
+  }
 
-	WFResolverTask(const struct WFNSParams *ns_params,
-				   router_callback_t&& cb) :
-		WFRouterTask(std::move(cb)),
-		ns_params_(*ns_params)
-	{
-		if (ns_params_.fixed_conn)
-			ep_params_.max_connections = 1;
+  WFResolverTask(const struct WFNSParams *ns_params, router_callback_t &&cb)
+      : WFRouterTask(std::move(cb)), ns_params_(*ns_params) {
+    if (ns_params_.fixed_conn)
+      ep_params_.max_connections = 1;
 
-		has_next_ = false;
-		in_guard_ = false;
-		msg_ = NULL;
-	}
+    has_next_ = false;
+    in_guard_ = false;
+    msg_ = NULL;
+  }
 
 protected:
-	virtual void dispatch();
-	virtual SubTask *done();
-	void set_has_next() { has_next_ = true; }
+  virtual void dispatch();
+  virtual SubTask *done();
+  void set_has_next() { has_next_ = true; }
 
 private:
-	void thread_dns_callback(void *thrd_dns_task);
-	void dns_single_callback(void *net_dns_task);
-	static void dns_partial_callback(void *net_dns_task);
-	void dns_parallel_callback(const void *parallel);
-	void dns_callback_internal(void *thrd_dns_output,
-							   unsigned int ttl_default,
-							   unsigned int ttl_min);
+  void thread_dns_callback(void *thrd_dns_task);
+  void dns_single_callback(void *net_dns_task);
+  static void dns_partial_callback(void *net_dns_task);
+  void dns_parallel_callback(const void *parallel);
+  void dns_callback_internal(void *thrd_dns_output, unsigned int ttl_default,
+                             unsigned int ttl_min);
 
-	void request_dns();
-	void task_callback();
+  void request_dns();
+  void task_callback();
 
 protected:
-	struct WFNSParams ns_params_;
-	unsigned int dns_ttl_default_;
-	unsigned int dns_ttl_min_;
-	struct EndpointParams ep_params_;
+  struct WFNSParams ns_params_;
+  unsigned int dns_ttl_default_;
+  unsigned int dns_ttl_min_;
+  struct EndpointParams ep_params_;
 
 private:
-	const char *host_;
-	unsigned short port_;
-	bool has_next_;
-	bool in_guard_;
-	void *msg_;
+  const char *host_;
+  unsigned short port_;
+  bool has_next_;
+  bool in_guard_;
+  void *msg_;
 };
 
-class WFDnsResolver : public WFNSPolicy
-{
+class WFDnsResolver : public WFNSPolicy {
 public:
-	virtual WFRouterTask *create_router_task(const struct WFNSParams *params,
-											 router_callback_t callback);
+  virtual WFRouterTask *create_router_task(const struct WFNSParams *params,
+                                           router_callback_t callback);
 };
 
 #endif
-

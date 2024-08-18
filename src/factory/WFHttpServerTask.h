@@ -20,31 +20,27 @@
 #define _WFHTTPSERVERTASK_H_
 
 #include "HttpMessage.h"
-#include "WFTask.h"
 #include "WFGlobal.h"
+#include "WFTask.h"
 
-class WFHttpServerTask : public WFServerTask<protocol::HttpRequest,
-											 protocol::HttpResponse>
-{
+class WFHttpServerTask
+    : public WFServerTask<protocol::HttpRequest, protocol::HttpResponse> {
 private:
-	using TASK = WFNetworkTask<protocol::HttpRequest, protocol::HttpResponse>;
+  using TASK = WFNetworkTask<protocol::HttpRequest, protocol::HttpResponse>;
 
 public:
-	WFHttpServerTask(CommService *service, std::function<void (TASK *)>& proc) :
-		WFServerTask(service, WFGlobal::get_scheduler(), proc),
-		req_is_alive_(false),
-		req_has_keep_alive_header_(false)
-	{}
+  WFHttpServerTask(CommService *service, std::function<void(TASK *)> &proc)
+      : WFServerTask(service, WFGlobal::get_scheduler(), proc),
+        req_is_alive_(false), req_has_keep_alive_header_(false) {}
 
 protected:
-	virtual void handle(int state, int error);
-	virtual CommMessageOut *message_out();
+  virtual void handle(int state, int error);
+  virtual CommMessageOut *message_out();
 
 protected:
-	bool req_is_alive_;
-	bool req_has_keep_alive_header_;
-	std::string req_keep_alive_;
+  bool req_is_alive_;
+  bool req_has_keep_alive_header_;
+  std::string req_keep_alive_;
 };
 
 #endif
-

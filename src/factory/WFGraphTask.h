@@ -19,89 +19,72 @@
 #ifndef _WFGRAPHTASK_H_
 #define _WFGRAPHTASK_H_
 
-#include <vector>
-#include <utility>
-#include <functional>
-#include "Workflow.h"
 #include "WFTask.h"
+#include "Workflow.h"
+#include <functional>
+#include <utility>
+#include <vector>
 
-class WFGraphNode : protected WFCounterTask
-{
+class WFGraphNode : protected WFCounterTask {
 public:
-	void precede(WFGraphNode& node)
-	{
-		node.value++;
-		this->successors.push_back(&node);
-	}
+  void precede(WFGraphNode &node) {
+    node.value++;
+    this->successors.push_back(&node);
+  }
 
-	void succeed(WFGraphNode& node)
-	{
-		node.precede(*this);
-	}
+  void succeed(WFGraphNode &node) { node.precede(*this); }
 
 protected:
-	virtual SubTask *done();
+  virtual SubTask *done();
 
 protected:
-	std::vector<WFGraphNode *> successors;
+  std::vector<WFGraphNode *> successors;
 
 protected:
-	WFGraphNode() : WFCounterTask(0, nullptr) { }
-	virtual ~WFGraphNode();
-	friend class WFGraphTask;
+  WFGraphNode() : WFCounterTask(0, nullptr) {}
+  virtual ~WFGraphNode();
+  friend class WFGraphTask;
 };
 
-static inline WFGraphNode& operator --(WFGraphNode& node, int)
-{
-	return node;
+static inline WFGraphNode &operator--(WFGraphNode &node, int) { return node; }
+
+static inline WFGraphNode &operator>(WFGraphNode &prec, WFGraphNode &succ) {
+  prec.precede(succ);
+  return succ;
 }
 
-static inline WFGraphNode& operator > (WFGraphNode& prec, WFGraphNode& succ)
-{
-	prec.precede(succ);
-	return succ;
+static inline WFGraphNode &operator<(WFGraphNode &succ, WFGraphNode &prec) {
+  succ.succeed(prec);
+  return prec;
 }
 
-static inline WFGraphNode& operator < (WFGraphNode& succ, WFGraphNode& prec)
-{
-	succ.succeed(prec);
-	return prec;
-}
+static inline WFGraphNode &operator--(WFGraphNode &node) { return node; }
 
-static inline WFGraphNode& operator --(WFGraphNode& node)
-{
-	return node;
-}
-
-class WFGraphTask : public WFGenericTask
-{
+class WFGraphTask : public WFGenericTask {
 public:
-	WFGraphNode& create_graph_node(SubTask *task);
+  WFGraphNode &create_graph_node(SubTask *task);
 
 public:
-	void set_callback(std::function<void (WFGraphTask *)> cb)
-	{
-		this->callback = std::move(cb);
-	}
+  void set_callback(std::function<void(WFGraphTask *)> cb) {
+    this->callback = std::move(cb);
+  }
 
 protected:
-	virtual void dispatch();
-	virtual SubTask *done();
+  virtual void dispatch();
+  virtual SubTask *done();
 
 protected:
-	ParallelWork *parallel;
-	std::function<void (WFGraphTask *)> callback;
+  ParallelWork *parallel;
+  std::function<void(WFGraphTask *)> callback;
 
 public:
-	WFGraphTask(std::function<void (WFGraphTask *)>&& cb) :
-		callback(std::move(cb))
-	{
-		this->parallel = Workflow::create_parallel_work(nullptr);
-	}
+  WFGraphTask(std::function<void(WFGraphTask *)> &&cb)
+      : callback(std::move(cb)) {
+    this->parallel = Workflow::create_parallel_work(nullptr);
+  }
 
 protected:
-	virtual ~WFGraphTask();
+  virtual ~WFGraphTask();
 };
 
 #endif
-

@@ -19,40 +19,33 @@
 #ifndef _IOREQUEST_H_
 #define _IOREQUEST_H_
 
-#include <errno.h>
-#include "SubTask.h"
 #include "Communicator.h"
+#include "SubTask.h"
+#include <errno.h>
 
-class IORequest : public SubTask, public IOSession
-{
+class IORequest : public SubTask, public IOSession {
 public:
-	IORequest(IOService *service)
-	{
-		this->service = service;
-	}
+  IORequest(IOService *service) { this->service = service; }
 
 public:
-	virtual void dispatch()
-	{
-		if (this->service->request(this) < 0)
-			this->handle(IOS_STATE_ERROR, errno);
-	}
+  virtual void dispatch() {
+    if (this->service->request(this) < 0)
+      this->handle(IOS_STATE_ERROR, errno);
+  }
 
 protected:
-	int state;
-	int error;
+  int state;
+  int error;
 
 protected:
-	IOService *service;
+  IOService *service;
 
 protected:
-	virtual void handle(int state, int error)
-	{
-		this->state = state;
-		this->error = error;
-		this->subtask_done();
-	}
+  virtual void handle(int state, int error) {
+    this->state = state;
+    this->error = error;
+    this->subtask_done();
+  }
 };
 
 #endif
-

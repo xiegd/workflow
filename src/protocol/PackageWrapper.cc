@@ -16,57 +16,49 @@
   Author: Xie Han (xiehan@sogou-inc.com)
 */
 
-#include <errno.h>
 #include "PackageWrapper.h"
+#include <errno.h>
 
-namespace protocol
-{
+namespace protocol {
 
-int PackageWrapper::encode(struct iovec vectors[], int max)
-{
-	int cnt = 0;
-	int ret;
+int PackageWrapper::encode(struct iovec vectors[], int max) {
+  int cnt = 0;
+  int ret;
 
-	while (max >= 8)
-	{
-		ret = this->ProtocolWrapper::encode(vectors, max);
-		if ((unsigned int)ret > (unsigned int)max)
-		{
-			if (ret < 0)
-				return ret;
+  while (max >= 8) {
+    ret = this->ProtocolWrapper::encode(vectors, max);
+    if ((unsigned int)ret > (unsigned int)max) {
+      if (ret < 0)
+        return ret;
 
-			break;
-		}
+      break;
+    }
 
-		cnt += ret;
-		this->msg = this->next(this->msg);
-		if (!this->msg)
-			return cnt;
+    cnt += ret;
+    this->msg = this->next(this->msg);
+    if (!this->msg)
+      return cnt;
 
-		vectors += ret;
-		max -= ret;
-	}
+    vectors += ret;
+    max -= ret;
+  }
 
-	errno = EOVERFLOW;
-	return -1;
+  errno = EOVERFLOW;
+  return -1;
 }
 
-int PackageWrapper::append(const void *buf, size_t *size)
-{
-	int ret = this->ProtocolWrapper::append(buf, size);
+int PackageWrapper::append(const void *buf, size_t *size) {
+  int ret = this->ProtocolWrapper::append(buf, size);
 
-	if (ret > 0)
-	{
-		this->msg = this->next(this->msg);
-		if (this->msg)
-		{
-			this->renew();
-			ret = 0;
-		}
-	}
+  if (ret > 0) {
+    this->msg = this->next(this->msg);
+    if (this->msg) {
+      this->renew();
+      ret = 0;
+    }
+  }
 
-	return ret;
+  return ret;
 }
 
-}
-
+} // namespace protocol
