@@ -19,47 +19,37 @@
 #ifndef _SLEEPREQUEST_H_
 #define _SLEEPREQUEST_H_
 
-#include <errno.h>
-#include "SubTask.h"
-#include "Communicator.h"
 #include "CommScheduler.h"
+#include "Communicator.h"
+#include "SubTask.h"
+#include <errno.h>
 
-class SleepRequest : public SubTask, public SleepSession
-{
+class SleepRequest : public SubTask, public SleepSession {
 public:
-	SleepRequest(CommScheduler *scheduler)
-	{
-		this->scheduler = scheduler;
-	}
+  SleepRequest(CommScheduler *scheduler) { this->scheduler = scheduler; }
 
 public:
-	virtual void dispatch()
-	{
-		if (this->scheduler->sleep(this) < 0)
-			this->handle(SS_STATE_ERROR, errno);
-	}
+  virtual void dispatch() {
+    if (this->scheduler->sleep(this) < 0)
+      this->handle(SS_STATE_ERROR, errno);
+  }
 
 protected:
-	int cancel()
-	{
-		return this->scheduler->unsleep(this);
-	}
+  int cancel() { return this->scheduler->unsleep(this); }
 
 protected:
-	int state;
-	int error;
+  int state;
+  int error;
 
 protected:
-	CommScheduler *scheduler;
+  CommScheduler *scheduler;
 
 protected:
-	virtual void handle(int state, int error)
-	{
-		this->state = state;
-		this->error = error;
-		this->subtask_done();
-	}
+  virtual void handle(int state, int error) {
+    this->state = state;
+    this->error = error;
+    this->subtask_done();
+  }
 };
 
 #endif
-

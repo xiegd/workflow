@@ -16,99 +16,95 @@
   Author: Wu Jiaxu (wujiaxu@sogou-inc.com)
 */
 
-#include <mutex>
-#include <condition_variable>
-#include <chrono>
-#include <gtest/gtest.h>
-#include "workflow/WFTaskFactory.h"
-#include "workflow/WFOperator.h"
-#include "workflow/WFHttpServer.h"
 #include "workflow/HttpUtil.h"
+#include "workflow/WFHttpServer.h"
+#include "workflow/WFOperator.h"
+#include "workflow/WFTaskFactory.h"
+#include <chrono>
+#include <condition_variable>
+#include <gtest/gtest.h>
+#include <mutex>
 
-#define RETRY_MAX  3
+#define RETRY_MAX 3
 
-static void __http_process(WFHttpTask *task)
-{
-	auto *req = task->get_req();
-	auto *resp = task->get_resp();
+static void __http_process(WFHttpTask *task) {
+  auto *req = task->get_req();
+  auto *resp = task->get_resp();
 
-	EXPECT_TRUE(strcmp(req->get_request_uri(), "/test") == 0);
-	resp->add_header_pair("Content-Type", "text/plain");
+  EXPECT_TRUE(strcmp(req->get_request_uri(), "/test") == 0);
+  resp->add_header_pair("Content-Type", "text/plain");
 }
 
-TEST(http_unittest, WFHttpTask1)
-{
-	std::mutex mutex;
-	std::condition_variable cond;
-	bool done = false;
-	auto *task = WFTaskFactory::create_http_task("http://github.com", 0, RETRY_MAX, [&mutex, &cond, &done](WFHttpTask *task) {
-		auto state = task->get_state();
+TEST(http_unittest, WFHttpTask1) {
+  std::mutex mutex;
+  std::condition_variable cond;
+  bool done = false;
+  auto *task = WFTaskFactory::create_http_task(
+      "http://github.com", 0, RETRY_MAX,
+      [&mutex, &cond, &done](WFHttpTask *task) {
+        auto state = task->get_state();
 
-		//EXPECT_EQ(state, WFT_STATE_SUCCESS);
-		if (state == WFT_STATE_SUCCESS)
-		{
-			auto code = atoi(task->get_resp()->get_status_code());
-			EXPECT_TRUE(code == HttpStatusOK ||
-						code == HttpStatusMovedPermanently ||
-						code == HttpStatusFound ||
-						code == HttpStatusSeeOther ||
-						code == HttpStatusTemporaryRedirect ||
-						code == HttpStatusPermanentRedirect);
-		}
+        // EXPECT_EQ(state, WFT_STATE_SUCCESS);
+        if (state == WFT_STATE_SUCCESS) {
+          auto code = atoi(task->get_resp()->get_status_code());
+          EXPECT_TRUE(code == HttpStatusOK ||
+                      code == HttpStatusMovedPermanently ||
+                      code == HttpStatusFound || code == HttpStatusSeeOther ||
+                      code == HttpStatusTemporaryRedirect ||
+                      code == HttpStatusPermanentRedirect);
+        }
 
-		mutex.lock();
-		done = true;
-		mutex.unlock();
-		cond.notify_one();
-	});
-	task->start();
+        mutex.lock();
+        done = true;
+        mutex.unlock();
+        cond.notify_one();
+      });
+  task->start();
 
-	std::unique_lock<std::mutex> lock(mutex);
-	while (!done)
-		cond.wait(lock);
+  std::unique_lock<std::mutex> lock(mutex);
+  while (!done)
+    cond.wait(lock);
 
-	lock.unlock();
+  lock.unlock();
 }
 
-TEST(http_unittest, WFHttpTask2)
-{
-	std::mutex mutex;
-	std::condition_variable cond;
-	bool done = false;
-	auto *task = WFTaskFactory::create_http_task("http://github.com", 1, RETRY_MAX, [&mutex, &cond, &done](WFHttpTask *task) {
-		auto state = task->get_state();
+TEST(http_unittest, WFHttpTask2) {
+  std::mutex mutex;
+  std::condition_variable cond;
+  bool done = false;
+  auto *task = WFTaskFactory::create_http_task(
+      "http://github.com", 1, RETRY_MAX,
+      [&mutex, &cond, &done](WFHttpTask *task) {
+        auto state = task->get_state();
 
-		//EXPECT_EQ(state, WFT_STATE_SUCCESS);
-		if (state == WFT_STATE_SUCCESS)
-		{
-			auto code = atoi(task->get_resp()->get_status_code());
-			EXPECT_TRUE(code == HttpStatusOK ||
-						code == HttpStatusMovedPermanently ||
-						code == HttpStatusFound ||
-						code == HttpStatusSeeOther ||
-						code == HttpStatusTemporaryRedirect ||
-						code == HttpStatusPermanentRedirect);
-		}
+        // EXPECT_EQ(state, WFT_STATE_SUCCESS);
+        if (state == WFT_STATE_SUCCESS) {
+          auto code = atoi(task->get_resp()->get_status_code());
+          EXPECT_TRUE(code == HttpStatusOK ||
+                      code == HttpStatusMovedPermanently ||
+                      code == HttpStatusFound || code == HttpStatusSeeOther ||
+                      code == HttpStatusTemporaryRedirect ||
+                      code == HttpStatusPermanentRedirect);
+        }
 
-		mutex.lock();
-		done = true;
-		mutex.unlock();
-		cond.notify_one();
-	});
-	task->start();
+        mutex.lock();
+        done = true;
+        mutex.unlock();
+        cond.notify_one();
+      });
+  task->start();
 
-	std::unique_lock<std::mutex> lock(mutex);
-	while (!done)
-		cond.wait(lock);
+  std::unique_lock<std::mutex> lock(mutex);
+  while (!done)
+    cond.wait(lock);
 
-	lock.unlock();
+  lock.unlock();
 }
 
-TEST(http_unittest, WFHttpTask3)
-{
-	FILE *f;
-	f = fopen("server.crt", "w");
-	fputs(R"(
+TEST(http_unittest, WFHttpTask3) {
+  FILE *f;
+  f = fopen("server.crt", "w");
+  fputs(R"(
 -----BEGIN CERTIFICATE-----
 MIIDrjCCApYCCQCzDnhp/eqaRTANBgkqhkiG9w0BAQUFADCBmDELMAkGA1UEBhMC
 Q04xEDAOBgNVBAgMB0JlaWppbmcxEDAOBgNVBAcMB0JlaWppbmcxFzAVBgNVBAoM
@@ -131,10 +127,11 @@ BgkqhkiG9w0BAQUFAAOCAQEAoLALHvGt0xCsDsYxxQ3biioPa2djT5jN8/QI17QF
 SniEJZux/WkxaOkqMBHtXtdkowpSMjn/RUA5dVu5Zjyf8LL9cjBmyKMxLXKeQeKK
 0ylFmFZxY8GawFdCq4XUKzSuLw4/orfuKn/ViSSixuXL5A==
 -----END CERTIFICATE-----
-)", f);
-	fclose(f);
-	f = fopen("server.key", "w");
-	fputs(R"(
+)",
+        f);
+  fclose(f);
+  f = fopen("server.key", "w");
+  fputs(R"(
 -----BEGIN RSA PRIVATE KEY-----
 MIIEogIBAAKCAQEAsHoTX6We57LbiP4HBwPbWHm3/EP4roi2EeLJPdLx/O0B34F/
 KmFP4ouFsdskVRrPu1+hXyXIEN3JWWB/CUIvIKnaw1xoLCBMX5eNNY6QO2Dn6sKC
@@ -162,63 +159,67 @@ XuKftvnmL/NGeyHH9Tk5K0O0g71y2iVCLJUX/xeyxu2yD3+9AiIkGm51GtsvGRrG
 a/7MiJf+tw5lRG/Oks0pNOvFIpTXi8ncxW9tgQfy2hN6LMGD7uIu/X9uMJmwvNtj
 KZ1lOvb+vi3TLrQf4tfBekrXXe5tZK40QSJ7UdtY7HHrrbAXU+8=
 -----END RSA PRIVATE KEY-----
-)", f);
-	fclose(f);
+)",
+        f);
+  fclose(f);
 
-	WFHttpServer http_server(__http_process);
-	EXPECT_TRUE(http_server.start("127.0.0.1", 8811) == 0) << "http server start failed";
+  WFHttpServer http_server(__http_process);
+  EXPECT_TRUE(http_server.start("127.0.0.1", 8811) == 0)
+      << "http server start failed";
 
-	WFHttpServer https_server(__http_process);
-	EXPECT_TRUE(https_server.start("127.0.0.1", 8822, "server.crt", "server.key") == 0) << "https server start failed";
+  WFHttpServer https_server(__http_process);
+  EXPECT_TRUE(
+      https_server.start("127.0.0.1", 8822, "server.crt", "server.key") == 0)
+      << "https server start failed";
 
-	std::mutex mutex;
-	std::condition_variable cond;
-	bool done = false;
-	auto cb = [](WFHttpTask *task) {
-		auto state = task->get_state();
+  std::mutex mutex;
+  std::condition_variable cond;
+  bool done = false;
+  auto cb = [](WFHttpTask *task) {
+    auto state = task->get_state();
 
-		EXPECT_EQ(state, WFT_STATE_SUCCESS);
-		if (state == WFT_STATE_SUCCESS)
-		{
-			auto *resp = task->get_resp();
-			auto code = atoi(resp->get_status_code());
-			EXPECT_EQ(code, HttpStatusOK);
-			protocol::HttpHeaderCursor cursor(resp);
-			std::string content_type;
-			EXPECT_TRUE(cursor.find("Content-Type", content_type));
-			EXPECT_TRUE(content_type == "text/plain");
-		}
-	};
+    EXPECT_EQ(state, WFT_STATE_SUCCESS);
+    if (state == WFT_STATE_SUCCESS) {
+      auto *resp = task->get_resp();
+      auto code = atoi(resp->get_status_code());
+      EXPECT_EQ(code, HttpStatusOK);
+      protocol::HttpHeaderCursor cursor(resp);
+      std::string content_type;
+      EXPECT_TRUE(cursor.find("Content-Type", content_type));
+      EXPECT_TRUE(content_type == "text/plain");
+    }
+  };
 
-	auto *A = WFTaskFactory::create_http_task("http://127.0.0.1:8811/test", 0, RETRY_MAX, cb);
-	auto *B = WFTaskFactory::create_http_task("https://127.0.0.1:8822/test", 0, RETRY_MAX, cb);
-	auto& flow = *A > B;
+  auto *A = WFTaskFactory::create_http_task("http://127.0.0.1:8811/test", 0,
+                                            RETRY_MAX, cb);
+  auto *B = WFTaskFactory::create_http_task("https://127.0.0.1:8822/test", 0,
+                                            RETRY_MAX, cb);
+  auto &flow = *A > B;
 
-	flow.set_callback([&mutex, &cond, &done](const SeriesWork *series) {
-		mutex.lock();
-		done = true;
-		mutex.unlock();
-		cond.notify_one();
-	});
+  flow.set_callback([&mutex, &cond, &done](const SeriesWork *series) {
+    mutex.lock();
+    done = true;
+    mutex.unlock();
+    cond.notify_one();
+  });
 
-	flow.start();
-	std::unique_lock<std::mutex> lock(mutex);
-	while (!done)
-		cond.wait(lock);
+  flow.start();
+  std::unique_lock<std::mutex> lock(mutex);
+  while (!done)
+    cond.wait(lock);
 
-	lock.unlock();
-	http_server.stop();
-	https_server.stop();
+  lock.unlock();
+  http_server.stop();
+  https_server.stop();
 }
 
 #if OPENSSL_VERSION_NUMBER >= 0x10100000L
 
 #include <openssl/ssl.h>
-int main(int argc, char* argv[])
-{
-	OPENSSL_init_ssl(0, 0);
-	::testing::InitGoogleTest(&argc, argv);
-	return RUN_ALL_TESTS();
+int main(int argc, char *argv[]) {
+  OPENSSL_init_ssl(0, 0);
+  ::testing::InitGoogleTest(&argc, argv);
+  return RUN_ALL_TESTS();
 }
 
 #endif

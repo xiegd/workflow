@@ -5,7 +5,7 @@
   you may not use this file except in compliance with the License.
   You may obtain a copy of the License at
 
-	  http://www.apache.org/licenses/LICENSE-2.0
+          http://www.apache.org/licenses/LICENSE-2.0
 
   Unless required by applicable law or agreed to in writing, software
   distributed under the License is distributed on an "AS IS" BASIS,
@@ -19,55 +19,47 @@
 #ifndef _TUTORIALMESSAGE_H_
 #define _TUTORIALMESSAGE_H_
 
-#include <stdlib.h>
 #include "workflow/ProtocolMessage.h"
+#include <stdlib.h>
 
-namespace protocol
-{
+namespace protocol {
 
-class TutorialMessage : public ProtocolMessage
-{
+class TutorialMessage : public ProtocolMessage {
 private:
-	virtual int encode(struct iovec vectors[], int max);
-	virtual int append(const void *buf, size_t size);
+  virtual int encode(struct iovec vectors[], int max);
+  virtual int append(const void *buf, size_t size);
 
 public:
-	int set_message_body(const void *body, size_t size);
+  int set_message_body(const void *body, size_t size);
 
-	void get_message_body_nocopy(void **body, size_t *size)
-	{
-		*body = this->body;
-		*size = this->body_size;
-	}
+  void get_message_body_nocopy(void **body, size_t *size) {
+    *body = this->body;
+    *size = this->body_size;
+  }
 
 protected:
-	char head[4];
-	size_t head_received;
-	char *body;
-	size_t body_received;
-	size_t body_size;
+  char head[4];
+  size_t head_received;
+  char *body;
+  size_t body_received;
+  size_t body_size;
 
 public:
-	TutorialMessage()
-	{
-		this->head_received = 0;
-		this->body = NULL;
-		this->body_size = 0;
-	}
+  TutorialMessage() {
+    this->head_received = 0;
+    this->body = NULL;
+    this->body_size = 0;
+  }
 
-	TutorialMessage(TutorialMessage&& msg);
-	TutorialMessage& operator = (TutorialMessage&& msg);
+  TutorialMessage(TutorialMessage &&msg);
+  TutorialMessage &operator=(TutorialMessage &&msg);
 
-	virtual ~TutorialMessage()
-	{
-		free(this->body);
-	}
+  virtual ~TutorialMessage() { free(this->body); }
 };
 
 using TutorialRequest = TutorialMessage;
 using TutorialResponse = TutorialMessage;
 
-}
+} // namespace protocol
 
 #endif
-

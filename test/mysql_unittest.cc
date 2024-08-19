@@ -16,65 +16,62 @@
   Author: Wu Jiaxu (wujiaxu@sogou-inc.com)
 */
 
-#include <mutex>
-#include <condition_variable>
-#include <chrono>
-#include <gtest/gtest.h>
-#include "workflow/WFTaskFactory.h"
 #include "workflow/WFMySQLServer.h"
+#include "workflow/WFTaskFactory.h"
+#include <chrono>
+#include <condition_variable>
+#include <gtest/gtest.h>
+#include <mutex>
 
-#define RETRY_MAX  3
+#define RETRY_MAX 3
 
-static void __mysql_process(WFMySQLTask *task)
-{
-	//auto *req = task->get_req();
-	auto *resp = task->get_resp();
+static void __mysql_process(WFMySQLTask *task) {
+  // auto *req = task->get_req();
+  auto *resp = task->get_resp();
 
-	resp->set_ok_packet();
+  resp->set_ok_packet();
 }
 
-static void test_client(const char *url, const char *sql, std::mutex& mutex, std::condition_variable& cond, bool& done)
-{
-	auto *task = WFTaskFactory::create_mysql_task(url, RETRY_MAX, [&mutex, &cond, &done](WFMySQLTask *task) {
-		auto state = task->get_state();
-		EXPECT_EQ(state, WFT_STATE_SUCCESS);
-		mutex.lock();
-		done = true;
-		mutex.unlock();
-		cond.notify_one();
-	});
+static void test_client(const char *url, const char *sql, std::mutex &mutex,
+                        std::condition_variable &cond, bool &done) {
+  auto *task = WFTaskFactory::create_mysql_task(
+      url, RETRY_MAX, [&mutex, &cond, &done](WFMySQLTask *task) {
+        auto state = task->get_state();
+        EXPECT_EQ(state, WFT_STATE_SUCCESS);
+        mutex.lock();
+        done = true;
+        mutex.unlock();
+        cond.notify_one();
+      });
 
-	task->get_req()->set_query(sql);
-	task->start();
+  task->get_req()->set_query(sql);
+  task->start();
 }
 
-TEST(mysql_unittest, WFMySQLTask1)
-{
-	std::mutex mutex;
-	std::condition_variable cond;
-	bool done = false;
-	WFMySQLServer server(__mysql_process);
-	EXPECT_TRUE(server.start("127.0.0.1", 8899) == 0) << "server start failed";
+TEST(mysql_unittest, WFMySQLTask1) {
+  std::mutex mutex;
+  std::condition_variable cond;
+  bool done = false;
+  WFMySQLServer server(__mysql_process);
+  EXPECT_TRUE(server.start("127.0.0.1", 8899) == 0) << "server start failed";
 
-	test_client("mysql://testuser:testpass@127.0.0.1:8899/testdb",
-				"select * from testtable limit 3", mutex, cond, done);
-	std::unique_lock<std::mutex> lock(mutex);
-	while (!done)
-		cond.wait(lock);
+  test_client("mysql://testuser:testpass@127.0.0.1:8899/testdb",
+              "select * from testtable limit 3", mutex, cond, done);
+  std::unique_lock<std::mutex> lock(mutex);
+  while (!done)
+    cond.wait(lock);
 
-	lock.unlock();
-	server.stop();
+  lock.unlock();
+  server.stop();
 }
 
 #if OPENSSL_VERSION_NUMBER >= 0x10100000L
 
 #include <openssl/ssl.h>
-int main(int argc, char* argv[])
-{
-	OPENSSL_init_ssl(0, 0);
-	::testing::InitGoogleTest(&argc, argv);
-	return RUN_ALL_TESTS();
+int main(int argc, char *argv[]) {
+  OPENSSL_init_ssl(0, 0);
+  ::testing::InitGoogleTest(&argc, argv);
+  return RUN_ALL_TESTS();
 }
 
 #endif
-

@@ -19,29 +19,26 @@
 #ifndef _WFDNSCLIENT_H_
 #define _WFDNSCLIENT_H_
 
-#include <string>
-#include <atomic>
-#include "WFTaskFactory.h"
 #include "DnsMessage.h"
+#include "WFTaskFactory.h"
+#include <atomic>
+#include <string>
 
-class WFDnsClient
-{
+class WFDnsClient {
 public:
-	int init(const std::string& url);
-	int init(const std::string& url, const std::string& search_list,
-			 int ndots, int attempts, bool rotate);
-	void deinit();
+  int init(const std::string &url);
+  int init(const std::string &url, const std::string &search_list, int ndots,
+           int attempts, bool rotate);
+  void deinit();
 
-	WFDnsTask *create_dns_task(const std::string& name,
-							   dns_callback_t callback);
+  WFDnsTask *create_dns_task(const std::string &name, dns_callback_t callback);
 
 private:
-	void *params;
-	std::atomic<size_t> id;
+  void *params;
+  std::atomic<size_t> id;
 
 public:
-	virtual ~WFDnsClient() { }
+  virtual ~WFDnsClient() {}
 };
 
 #endif
-

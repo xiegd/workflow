@@ -19,75 +19,63 @@
 #ifndef _SSLWRAPPER_H_
 #define _SSLWRAPPER_H_
 
-#include <openssl/ssl.h>
 #include "ProtocolMessage.h"
+#include <openssl/ssl.h>
 
-namespace protocol
-{
+namespace protocol {
 
-class SSLHandshaker : public ProtocolMessage
-{
+class SSLHandshaker : public ProtocolMessage {
 public:
-	virtual int encode(struct iovec vectors[], int max);
-	virtual int append(const void *buf, size_t *size);
+  virtual int encode(struct iovec vectors[], int max);
+  virtual int append(const void *buf, size_t *size);
 
 protected:
-	SSL *ssl;
+  SSL *ssl;
 
 public:
-	SSLHandshaker(SSL *ssl)
-	{
-		this->ssl = ssl;
-	}
+  SSLHandshaker(SSL *ssl) { this->ssl = ssl; }
 
 public:
-	SSLHandshaker(SSLHandshaker&& handshaker) = default;
-	SSLHandshaker& operator = (SSLHandshaker&& handshaker) = default;
+  SSLHandshaker(SSLHandshaker &&handshaker) = default;
+  SSLHandshaker &operator=(SSLHandshaker &&handshaker) = default;
 };
 
-class SSLWrapper : public ProtocolWrapper
-{
+class SSLWrapper : public ProtocolWrapper {
 protected:
-	virtual int encode(struct iovec vectors[], int max);
-	virtual int append(const void *buf, size_t *size);
+  virtual int encode(struct iovec vectors[], int max);
+  virtual int append(const void *buf, size_t *size);
 
 protected:
-	virtual int feedback(const void *buf, size_t size);
+  virtual int feedback(const void *buf, size_t size);
 
 protected:
-	int append_message();
+  int append_message();
 
 protected:
-	SSL *ssl;
+  SSL *ssl;
 
 public:
-	SSLWrapper(ProtocolMessage *msg, SSL *ssl) :
-		ProtocolWrapper(msg)
-	{
-		this->ssl = ssl;
-	}
+  SSLWrapper(ProtocolMessage *msg, SSL *ssl) : ProtocolWrapper(msg) {
+    this->ssl = ssl;
+  }
 
 public:
-	SSLWrapper(SSLWrapper&& wrapper) = default;
-	SSLWrapper& operator = (SSLWrapper&& wrapper) = default;
+  SSLWrapper(SSLWrapper &&wrapper) = default;
+  SSLWrapper &operator=(SSLWrapper &&wrapper) = default;
 };
 
-class ServerSSLWrapper : public SSLWrapper
-{
+class ServerSSLWrapper : public SSLWrapper {
 protected:
-	virtual int append(const void *buf, size_t *size);
+  virtual int append(const void *buf, size_t *size);
 
 public:
-	ServerSSLWrapper(ProtocolMessage *msg, SSL *ssl) : SSLWrapper(msg, ssl)
-	{
-	}
+  ServerSSLWrapper(ProtocolMessage *msg, SSL *ssl) : SSLWrapper(msg, ssl) {}
 
 public:
-	ServerSSLWrapper(ServerSSLWrapper&& wrapper) = default;
-	ServerSSLWrapper& operator = (ServerSSLWrapper&& wrapper) = default;
+  ServerSSLWrapper(ServerSSLWrapper &&wrapper) = default;
+  ServerSSLWrapper &operator=(ServerSSLWrapper &&wrapper) = default;
 };
 
-}
+} // namespace protocol
 
 #endif
-

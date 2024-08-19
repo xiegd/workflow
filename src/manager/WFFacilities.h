@@ -21,93 +21,91 @@
 #ifndef _WFFACILITIES_H_
 #define _WFFACILITIES_H_
 
-#include <assert.h>
 #include "WFFuture.h"
 #include "WFTaskFactory.h"
+#include <assert.h>
 
-class WFFacilities
-{
+class WFFacilities {
 public:
-	static void usleep(unsigned int microseconds);
-	static WFFuture<void> async_usleep(unsigned int microseconds);
-
-public:
-	template<class FUNC, class... ARGS>
-	static void go(const std::string& queue_name, FUNC&& func, ARGS&&... args);
+  static void usleep(unsigned int microseconds);
+  static WFFuture<void> async_usleep(unsigned int microseconds);
 
 public:
-	template<class RESP>
-	struct WFNetworkResult
-	{
-		RESP resp;
-		long long seqid;
-		int task_state;
-		int task_error;
-	};
-
-	template<class REQ, class RESP>
-	static WFNetworkResult<RESP> request(enum TransportType type, const std::string& url, REQ&& req, int retry_max);
-
-	template<class REQ, class RESP>
-	static WFFuture<WFNetworkResult<RESP>> async_request(enum TransportType type, const std::string& url, REQ&& req, int retry_max);
-
-public:// async fileIO
-	static WFFuture<ssize_t> async_pread(int fd, void *buf, size_t count, off_t offset);
-	static WFFuture<ssize_t> async_pwrite(int fd, const void *buf, size_t count, off_t offset);
-	static WFFuture<ssize_t> async_preadv(int fd, const struct iovec *iov, int iovcnt, off_t offset);
-	static WFFuture<ssize_t> async_pwritev(int fd, const struct iovec *iov, int iovcnt, off_t offset);
-	static WFFuture<int> async_fsync(int fd);
-	static WFFuture<int> async_fdatasync(int fd);
+  template <class FUNC, class... ARGS>
+  static void go(const std::string &queue_name, FUNC &&func, ARGS &&...args);
 
 public:
-	class WaitGroup
-	{
-	public:
-		WaitGroup(int n);
-		~WaitGroup();
+  template <class RESP> struct WFNetworkResult {
+    RESP resp;
+    long long seqid;
+    int task_state;
+    int task_error;
+  };
 
-		void done();
-		void wait() const;
-		std::future_status wait(int timeout) const;
+  template <class REQ, class RESP>
+  static WFNetworkResult<RESP> request(enum TransportType type,
+                                       const std::string &url, REQ &&req,
+                                       int retry_max);
 
-	private:
-		static void __wait_group_callback(WFCounterTask *task);
+  template <class REQ, class RESP>
+  static WFFuture<WFNetworkResult<RESP>>
+  async_request(enum TransportType type, const std::string &url, REQ &&req,
+                int retry_max);
 
-		std::atomic<int> nleft;
-		WFCounterTask *task;
-		WFFuture<void> future;
-	};
+public: // async fileIO
+  static WFFuture<ssize_t> async_pread(int fd, void *buf, size_t count,
+                                       off_t offset);
+  static WFFuture<ssize_t> async_pwrite(int fd, const void *buf, size_t count,
+                                        off_t offset);
+  static WFFuture<ssize_t> async_preadv(int fd, const struct iovec *iov,
+                                        int iovcnt, off_t offset);
+  static WFFuture<ssize_t> async_pwritev(int fd, const struct iovec *iov,
+                                         int iovcnt, off_t offset);
+  static WFFuture<int> async_fsync(int fd);
+  static WFFuture<int> async_fdatasync(int fd);
 
 public:
-	class ReplyGuard
-	{
-	public:
-		ReplyGuard(SubTask *server_task)
-		{
-			SeriesWork *series = series_of(server_task);
-			assert(series);
-			assert(server_task == series->get_last_task());
-			this->cond = WFTaskFactory::create_conditional(server_task);
-			series->set_last_task(this->cond);
-		}
+  class WaitGroup {
+  public:
+    WaitGroup(int n);
+    ~WaitGroup();
 
-		~ReplyGuard()
-		{
-			this->cond->signal(NULL);
-		}
+    void done();
+    void wait() const;
+    std::future_status wait(int timeout) const;
 
-	private:
-		WFConditional *cond;
-	};
+  private:
+    static void __wait_group_callback(WFCounterTask *task);
+
+    std::atomic<int> nleft;
+    WFCounterTask *task;
+    WFFuture<void> future;
+  };
+
+public:
+  class ReplyGuard {
+  public:
+    ReplyGuard(SubTask *server_task) {
+      SeriesWork *series = series_of(server_task);
+      assert(series);
+      assert(server_task == series->get_last_task());
+      this->cond = WFTaskFactory::create_conditional(server_task);
+      series->set_last_task(this->cond);
+    }
+
+    ~ReplyGuard() { this->cond->signal(NULL); }
+
+  private:
+    WFConditional *cond;
+  };
 
 private:
-	static void __timer_future_callback(WFTimerTask *task);
-	static void __fio_future_callback(WFFileIOTask *task);
-	static void __fvio_future_callback(WFFileVIOTask *task);
-	static void __fsync_future_callback(WFFileSyncTask *task);
+  static void __timer_future_callback(WFTimerTask *task);
+  static void __fio_future_callback(WFFileIOTask *task);
+  static void __fvio_future_callback(WFFileVIOTask *task);
+  static void __fsync_future_callback(WFFileSyncTask *task);
 };
 
 #include "WFFacilities.inl"
 
 #endif
-

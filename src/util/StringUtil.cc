@@ -16,215 +16,191 @@
   Authors: Wu Jiaxu (wujiaxu@sogou-inc.com)
 */
 
+#include "StringUtil.h"
+#include <algorithm>
 #include <ctype.h>
 #include <string>
 #include <vector>
-#include <algorithm>
-#include "StringUtil.h"
 
-static int __htoi(unsigned char *s)
-{
-	int value;
-	int c;
+static int __htoi(unsigned char *s) {
+  int value;
+  int c;
 
-	c = s[0];
-	if (isupper(c))
-		c = tolower(c);
+  c = s[0];
+  if (isupper(c))
+    c = tolower(c);
 
-	value = (c >= '0' && c <= '9' ? c - '0' : c - 'a' + 10) * 16;
+  value = (c >= '0' && c <= '9' ? c - '0' : c - 'a' + 10) * 16;
 
-	c = s[1];
-	if (isupper(c))
-		c = tolower(c);
+  c = s[1];
+  if (isupper(c))
+    c = tolower(c);
 
-	value += (c >= '0' && c <= '9' ? c - '0' : c - 'a' + 10);
-	return value;
+  value += (c >= '0' && c <= '9' ? c - '0' : c - 'a' + 10);
+  return value;
 }
 
-static inline char __itoh(int n)
-{
-	if (n > 9)
-		return n - 10 + 'A';
+static inline char __itoh(int n) {
+  if (n > 9)
+    return n - 10 + 'A';
 
-	return n + '0';
+  return n + '0';
 }
 
-static size_t __url_decode(char *str)
-{
-	char *dest = str;
-	char *data = str;
+static size_t __url_decode(char *str) {
+  char *dest = str;
+  char *data = str;
 
-	while (*data)
-	{
-		if (*data == '%' && isxdigit(data[1]) && isxdigit(data[2]))
-		{
-			*dest = __htoi((unsigned char *)data + 1);
-			data += 2;
-		}
-		else if (*data == '+')
-			*dest = ' ';
-		else
-			*dest = *data;
+  while (*data) {
+    if (*data == '%' && isxdigit(data[1]) && isxdigit(data[2])) {
+      *dest = __htoi((unsigned char *)data + 1);
+      data += 2;
+    } else if (*data == '+')
+      *dest = ' ';
+    else
+      *dest = *data;
 
-		data++;
-		dest++;
-	}
+    data++;
+    dest++;
+  }
 
-	*dest = '\0';
-	return dest - str;
+  *dest = '\0';
+  return dest - str;
 }
 
-void StringUtil::url_decode(std::string& str)
-{
-	if (str.empty())
-		return;
+void StringUtil::url_decode(std::string &str) {
+  if (str.empty())
+    return;
 
-	size_t sz = __url_decode(const_cast<char *>(str.c_str()));
+  size_t sz = __url_decode(const_cast<char *>(str.c_str()));
 
-	str.resize(sz);
+  str.resize(sz);
 }
 
-std::string StringUtil::url_encode(const std::string& str)
-{
-	const char *cur = str.c_str();
-	const char *ed = cur + str.size();
-	std::string res;
+std::string StringUtil::url_encode(const std::string &str) {
+  const char *cur = str.c_str();
+  const char *ed = cur + str.size();
+  std::string res;
 
-	while (cur < ed)
-	{
-		if (*cur == ' ')
-			res += '+';
-		else if (isalnum(*cur) || *cur == '-' || *cur == '_' || *cur == '.' ||
-				 *cur == '!' || *cur == '~' || *cur == '*' || *cur == '\'' ||
-				 *cur == '(' || *cur == ')' || *cur == ':' || *cur == '/' ||
-				 *cur == '@' || *cur == '?' || *cur == '#' || *cur == '&')
-			res += *cur;
-		else
-		{
-			res += '%';
-			res += __itoh(((const unsigned char)(*cur)) >> 4);
-			res += __itoh(((const unsigned char)(*cur)) % 16);
-		}
+  while (cur < ed) {
+    if (*cur == ' ')
+      res += '+';
+    else if (isalnum(*cur) || *cur == '-' || *cur == '_' || *cur == '.' ||
+             *cur == '!' || *cur == '~' || *cur == '*' || *cur == '\'' ||
+             *cur == '(' || *cur == ')' || *cur == ':' || *cur == '/' ||
+             *cur == '@' || *cur == '?' || *cur == '#' || *cur == '&')
+      res += *cur;
+    else {
+      res += '%';
+      res += __itoh(((const unsigned char)(*cur)) >> 4);
+      res += __itoh(((const unsigned char)(*cur)) % 16);
+    }
 
-		cur++;
-	}
+    cur++;
+  }
 
-	return res;
+  return res;
 }
 
-std::string StringUtil::url_encode_component(const std::string& str)
-{
-	const char *cur = str.c_str();
-	const char *ed = cur + str.size();
-	std::string res;
+std::string StringUtil::url_encode_component(const std::string &str) {
+  const char *cur = str.c_str();
+  const char *ed = cur + str.size();
+  std::string res;
 
-	while (cur < ed)
-	{
-		if (*cur == ' ')
-			res += '+';
-		else if (isalnum(*cur) || *cur == '-' || *cur == '_' || *cur == '.' ||
-				 *cur == '!' || *cur == '~' || *cur == '*' || *cur == '\'' ||
-				 *cur == '(' || *cur == ')')
-			res += *cur;
-		else
-		{
-			res += '%';
-			res += __itoh(((const unsigned char)(*cur)) >> 4);
-			res += __itoh(((const unsigned char)(*cur)) % 16);
-		}
+  while (cur < ed) {
+    if (*cur == ' ')
+      res += '+';
+    else if (isalnum(*cur) || *cur == '-' || *cur == '_' || *cur == '.' ||
+             *cur == '!' || *cur == '~' || *cur == '*' || *cur == '\'' ||
+             *cur == '(' || *cur == ')')
+      res += *cur;
+    else {
+      res += '%';
+      res += __itoh(((const unsigned char)(*cur)) >> 4);
+      res += __itoh(((const unsigned char)(*cur)) % 16);
+    }
 
-		cur++;
-	}
+    cur++;
+  }
 
-	return res;
+  return res;
 }
 
-std::vector<std::string> StringUtil::split(const std::string& str, char sep)
-{
-	std::string::const_iterator start = str.begin();
-	std::string::const_iterator end = str.end();
-	std::string::const_iterator next = find(start, end, sep);
-	std::vector<std::string> res;
+std::vector<std::string> StringUtil::split(const std::string &str, char sep) {
+  std::string::const_iterator start = str.begin();
+  std::string::const_iterator end = str.end();
+  std::string::const_iterator next = find(start, end, sep);
+  std::vector<std::string> res;
 
-	while (next != end)
-	{
-		res.emplace_back(start, next);
-		start = next + 1;
-		next = std::find(start, end, sep);
-	}
+  while (next != end) {
+    res.emplace_back(start, next);
+    start = next + 1;
+    next = std::find(start, end, sep);
+  }
 
-	res.emplace_back(start, next);
-	return res;
+  res.emplace_back(start, next);
+  return res;
 }
 
-std::vector<std::string> StringUtil::split_filter_empty(const std::string& str,
-														char sep)
-{
-	std::vector<std::string> res;
-	std::string::const_iterator start = str.begin();
-	std::string::const_iterator end = str.end();
-	std::string::const_iterator next = find(start, end, sep);
+std::vector<std::string> StringUtil::split_filter_empty(const std::string &str,
+                                                        char sep) {
+  std::vector<std::string> res;
+  std::string::const_iterator start = str.begin();
+  std::string::const_iterator end = str.end();
+  std::string::const_iterator next = find(start, end, sep);
 
-	while (next != end)
-	{
-		if (start < next)
-			res.emplace_back(start, next);
+  while (next != end) {
+    if (start < next)
+      res.emplace_back(start, next);
 
-		start = next + 1;
-		next = find(start, end, sep);
-	}
+    start = next + 1;
+    next = find(start, end, sep);
+  }
 
-	if (start < next)
-		res.emplace_back(start, next);
+  if (start < next)
+    res.emplace_back(start, next);
 
-	return res;
+  return res;
 }
 
-std::string StringUtil::strip(const std::string& str)
-{
-	std::string res;
+std::string StringUtil::strip(const std::string &str) {
+  std::string res;
 
-	if (!str.empty())
-	{
-		const char *st = str.c_str();
-		const char *ed = st + str.size() - 1;
+  if (!str.empty()) {
+    const char *st = str.c_str();
+    const char *ed = st + str.size() - 1;
 
-		while (st <= ed)
-		{
-			if (!isspace(*st))
-				break;
+    while (st <= ed) {
+      if (!isspace(*st))
+        break;
 
-			st++;
-		}
+      st++;
+    }
 
-		while (ed >= st)
-		{
-			if (!isspace(*ed))
-				break;
+    while (ed >= st) {
+      if (!isspace(*ed))
+        break;
 
-			ed--;
-		}
+      ed--;
+    }
 
-		if (ed >= st)
-			res.assign(st, ed - st + 1);
-	}
+    if (ed >= st)
+      res.assign(st, ed - st + 1);
+  }
 
-	return res;
+  return res;
 }
 
-bool StringUtil::start_with(const std::string& str, const std::string& prefix)
-{
-	size_t prefix_len = prefix.size();
+bool StringUtil::start_with(const std::string &str, const std::string &prefix) {
+  size_t prefix_len = prefix.size();
 
-	if (str.size() < prefix_len)
-		return false;
+  if (str.size() < prefix_len)
+    return false;
 
-	for (size_t i = 0; i < prefix_len; i++)
-	{
-		if (str[i] != prefix[i])
-			return false;
-	}
+  for (size_t i = 0; i < prefix_len; i++) {
+    if (str[i] != prefix[i])
+      return false;
+  }
 
-	return true;
+  return true;
 }
-

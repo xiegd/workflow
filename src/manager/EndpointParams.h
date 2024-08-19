@@ -19,42 +19,38 @@
 #ifndef _ENDPOINTPARAMS_H_
 #define _ENDPOINTPARAMS_H_
 
-#include <sys/types.h>
 #include <sys/socket.h>
+#include <sys/types.h>
 
 /**
  * @file   EndpointParams.h
  * @brief  Network config for client task
  */
 
-enum TransportType
-{
-	TT_TCP,
-	TT_UDP,
-	TT_SCTP,
-	TT_TCP_SSL,
-	TT_SCTP_SSL,
+enum TransportType {
+  TT_TCP,
+  TT_UDP,
+  TT_SCTP,
+  TT_TCP_SSL,
+  TT_SCTP_SSL,
 };
 
-struct EndpointParams
-{
-	int address_family;
-	size_t max_connections;
-	int connect_timeout;
-	int response_timeout;
-	int ssl_connect_timeout;
-	bool use_tls_sni;
+struct EndpointParams {
+  int address_family;
+  size_t max_connections;
+  int connect_timeout;
+  int response_timeout;
+  int ssl_connect_timeout;
+  bool use_tls_sni;
 };
 
-static constexpr struct EndpointParams ENDPOINT_PARAMS_DEFAULT =
-{
-	.address_family			=	AF_UNSPEC,
-	.max_connections		=	200,
-	.connect_timeout		=	10 * 1000,
-	.response_timeout		=	10 * 1000,
-	.ssl_connect_timeout	=	10 * 1000,
-	.use_tls_sni			=	false,
+static constexpr struct EndpointParams ENDPOINT_PARAMS_DEFAULT = {
+    .address_family = AF_UNSPEC,
+    .max_connections = 200,
+    .connect_timeout = 10 * 1000,
+    .response_timeout = 10 * 1000,
+    .ssl_connect_timeout = 10 * 1000,
+    .use_tls_sni = false,
 };
 
 #endif
-

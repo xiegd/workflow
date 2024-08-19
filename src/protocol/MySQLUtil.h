@@ -21,17 +21,14 @@
 
 #include <string>
 
-namespace protocol
-{
+namespace protocol {
 
-class MySQLUtil
-{
+class MySQLUtil {
 public:
-	static std::string escape_string(const std::string& str);
-	static std::string escape_string_quote(const std::string& str, char quote);
+  static std::string escape_string(const std::string &str);
+  static std::string escape_string_quote(const std::string &str, char quote);
 };
 
-}
+} // namespace protocol
 
 #endif
-

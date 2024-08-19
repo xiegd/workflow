@@ -19,44 +19,39 @@
 #ifndef _EXECREQUEST_H_
 #define _EXECREQUEST_H_
 
-#include "SubTask.h"
 #include "Executor.h"
+#include "SubTask.h"
 
-class ExecRequest : public SubTask, public ExecSession
-{
+class ExecRequest : public SubTask, public ExecSession {
 public:
-	ExecRequest(ExecQueue *queue, Executor *executor)
-	{
-		this->executor = executor;
-		this->queue = queue;
-	}
+  ExecRequest(ExecQueue *queue, Executor *executor) {
+    this->executor = executor;
+    this->queue = queue;
+  }
 
-	ExecQueue *get_request_queue() const { return this->queue; }
-	void set_request_queue(ExecQueue *queue) { this->queue = queue; }
+  ExecQueue *get_request_queue() const { return this->queue; }
+  void set_request_queue(ExecQueue *queue) { this->queue = queue; }
 
 public:
-	virtual void dispatch()
-	{
-		if (this->executor->request(this, this->queue) < 0)
-			this->handle(ES_STATE_ERROR, errno);
-	}
+  virtual void dispatch() {
+    if (this->executor->request(this, this->queue) < 0)
+      this->handle(ES_STATE_ERROR, errno);
+  }
 
 protected:
-	int state;
-	int error;
+  int state;
+  int error;
 
 protected:
-	ExecQueue *queue;
-	Executor *executor;
+  ExecQueue *queue;
+  Executor *executor;
 
 protected:
-	virtual void handle(int state, int error)
-	{
-		this->state = state;
-		this->error = error;
-		this->subtask_done();
-	}
+  virtual void handle(int state, int error) {
+    this->state = state;
+    this->error = error;
+    this->subtask_done();
+  }
 };
 
 #endif
-

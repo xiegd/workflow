@@ -17,101 +17,86 @@
            Xie Han (xiehan@sogou-inc.com)
 */
 
-#include <string.h>
-#include "list.h"
-#include "WFTask.h"
 #include "WFResourcePool.h"
+#include "WFTask.h"
+#include "list.h"
+#include <string.h>
 
-class __RPConditional : public WFConditional
-{
+class __RPConditional : public WFConditional {
 public:
-	struct list_head list;
-	struct WFResourcePool::Data *data;
-
-public:
-	virtual void dispatch();
-	virtual void signal(void *res) { }
+  struct list_head list;
+  struct WFResourcePool::Data *data;
 
 public:
-	__RPConditional(SubTask *task, void **resbuf,
-					struct WFResourcePool::Data *data) :
-		WFConditional(task, resbuf)
-	{
-		this->data = data;
-	}
+  virtual void dispatch();
+  virtual void signal(void *res) {}
 
-	__RPConditional(SubTask *task,
-					struct WFResourcePool::Data *data) :
-		WFConditional(task)
-	{
-		this->data = data;
-	}
+public:
+  __RPConditional(SubTask *task, void **resbuf,
+                  struct WFResourcePool::Data *data)
+      : WFConditional(task, resbuf) {
+    this->data = data;
+  }
+
+  __RPConditional(SubTask *task, struct WFResourcePool::Data *data)
+      : WFConditional(task) {
+    this->data = data;
+  }
 };
 
-void __RPConditional::dispatch()
-{
-	struct WFResourcePool::Data *data = this->data;
+void __RPConditional::dispatch() {
+  struct WFResourcePool::Data *data = this->data;
 
-	data->mutex.lock();
-	if (--data->value >= 0)
-		this->WFConditional::signal(data->pop());
-	else
-		list_add_tail(&this->list, &data->wait_list);
+  data->mutex.lock();
+  if (--data->value >= 0)
+    this->WFConditional::signal(data->pop());
+  else
+    list_add_tail(&this->list, &data->wait_list);
 
-	data->mutex.unlock();
-	this->WFConditional::dispatch();
+  data->mutex.unlock();
+  this->WFConditional::dispatch();
 }
 
-WFConditional *WFResourcePool::get(SubTask *task, void **resbuf)
-{
-	return new __RPConditional(task, resbuf, &this->data);
+WFConditional *WFResourcePool::get(SubTask *task, void **resbuf) {
+  return new __RPConditional(task, resbuf, &this->data);
 }
 
-WFConditional *WFResourcePool::get(SubTask *task)
-{
-	return new __RPConditional(task, &this->data);
+WFConditional *WFResourcePool::get(SubTask *task) {
+  return new __RPConditional(task, &this->data);
 }
 
-void WFResourcePool::create(size_t n)
-{
-	this->data.res = new void *[n];
-	this->data.value = n;
-	this->data.index = 0;
-	INIT_LIST_HEAD(&this->data.wait_list);
-	this->data.pool = this;
+void WFResourcePool::create(size_t n) {
+  this->data.res = new void *[n];
+  this->data.value = n;
+  this->data.index = 0;
+  INIT_LIST_HEAD(&this->data.wait_list);
+  this->data.pool = this;
 }
 
-WFResourcePool::WFResourcePool(void *const *res, size_t n)
-{
-	this->create(n);
-	memcpy(this->data.res, res, n * sizeof (void *));
+WFResourcePool::WFResourcePool(void *const *res, size_t n) {
+  this->create(n);
+  memcpy(this->data.res, res, n * sizeof(void *));
 }
 
-WFResourcePool::WFResourcePool(size_t n)
-{
-	this->create(n);
-	memset(this->data.res, 0, n * sizeof (void *));
+WFResourcePool::WFResourcePool(size_t n) {
+  this->create(n);
+  memset(this->data.res, 0, n * sizeof(void *));
 }
 
-void WFResourcePool::post(void *res)
-{
-	struct WFResourcePool::Data *data = &this->data;
-	WFConditional *cond;
+void WFResourcePool::post(void *res) {
+  struct WFResourcePool::Data *data = &this->data;
+  WFConditional *cond;
 
-	data->mutex.lock();
-	if (++data->value <= 0)
-	{
-		cond = list_entry(data->wait_list.next, __RPConditional, list);
-		list_del(data->wait_list.next);
-	}
-	else
-	{
-		cond = NULL;
-		this->push(res);
-	}
+  data->mutex.lock();
+  if (++data->value <= 0) {
+    cond = list_entry(data->wait_list.next, __RPConditional, list);
+    list_del(data->wait_list.next);
+  } else {
+    cond = NULL;
+    this->push(res);
+  }
 
-	data->mutex.unlock();
-	if (cond)
-		cond->WFConditional::signal(res);
+  data->mutex.unlock();
+  if (cond)
+    cond->WFConditional::signal(res);
 }
-
